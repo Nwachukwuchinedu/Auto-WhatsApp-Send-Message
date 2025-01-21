@@ -8,7 +8,7 @@ dotenv.config();
 const { Client, LocalAuth } = pkg;
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Environment variables
 const FETCH_API_URL = process.env.FETCH_API_URL;
@@ -34,6 +34,9 @@ client.on("qr", (qr) => {
 
 client.on("ready", () => {
   console.log("WhatsApp client is ready!");
+
+  // Start the process
+  initiateMessageSending();
 });
 
 client.initialize();
@@ -89,26 +92,39 @@ async function sendMessageToGroup(groupId, message) {
 
 // Format the message
 function formatMessage(course) {
-  return `📚 *Course Title*: ${course.title}\n🎯 *Level*: ${
-    course.instructional_level_simple
-  }\n🕒 *Duration*: ${course.content_info_short}\n🌐 *Language*: ${
-    course.language
-  }\n⭐ *Rating*: ${course.rating}\n🔗 *Link*: ${
-    course.instructors[0]?.AcademiaApps || "N/A"
-  }`;
+  return `
+  📚 *Course Title*: ${course.title}\n
+  📝 *Headline*: ${course.headline}\n
+  🎯 *Level*: ${course.instructional_level_simple}\n
+  🕒 *Duration*: ${course.content_info_short}\n
+  🆓 *Enrolls Left*: ${course.coupon_uses_remaining}\n 
+  🌐 *Language*: ${course.language}\n
+  ⭐ *Rating*: ${course.rating}\n
+  📂 *Category*: ${course.primary_category}\n
+  🏷️ *Sub Category*: ${course.primary_subcategory}\n
+  🔗 *Link*: https://www.udemy.com/course/${course.id_name}/?couponCode=${course.coupon_code}
+ `;
 }
 
 // Main function to fetch and send messages at intervals
 async function startSendingMessages() {
   const courses = await fetchCourses();
+  console.log(`length of courses: ${courses.length}`);
 
-  for (const course of courses) {
+  // for (const course of courses) {
+  //   const message = formatMessage(course);
+  //   await sendMessageToGroup(GROUP_ID, message);
+
+  //   // Wait for 90 seconds before sending the next message
+  //   await new Promise((resolve) => setTimeout(resolve, 90000));
+  // }
+
+  courses.forEach(async (course) => {
     const message = formatMessage(course);
     await sendMessageToGroup(GROUP_ID, message);
-
     // Wait for 90 seconds before sending the next message
     await new Promise((resolve) => setTimeout(resolve, 90000));
-  }
+  });
 
   console.log("Finished sending messages.");
 }
@@ -119,9 +135,6 @@ async function initiateMessageSending() {
   await startSendingMessages();
   setTimeout(initiateMessageSending, 90000);
 }
-
-// Start the process
-initiateMessageSending();
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
