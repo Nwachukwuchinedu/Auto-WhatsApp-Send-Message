@@ -1,8 +1,14 @@
 import express from "express";
 import pkg from "whatsapp-web.js";
-import qrcode from "qrcode-terminal";
+import qrcode from "qrcode";
 import axios from "axios";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";  
+// To resolve __dirname in ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 dotenv.config();
 
 const { Client, LocalAuth } = pkg;
@@ -27,17 +33,68 @@ const client = new Client({
   authStrategy: new LocalAuth(),
 });
 
-client.on("qr", (qr) => {
-  console.log("Scan this QR code to log in:");
-  qrcode.generate(qr, { small: true });
+// Route to serve the index.html file from the root of the project
+app.get("/", (req, res) => {
+  // Use path.join to create the correct path to index.html
+  const filePath = path.join(__dirname, "index.html");
+
+  // Send the HTML file
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.log("Error sending file:", err);
+      res.status(500).send("Error loading the page");
+    } else {
+      console.log("HTML file sent successfully");
+    }
+  });
 });
 
+// Endpoint to get QR code
+app.get("/qr-code", (req, res) => {
+  // Create a flag to ensure the response is sent only once
+  let responseSent = false;
+
+  client.on("qr", (qr) => {
+    if (responseSent) return; // Prevent sending multiple responses
+
+    qrcode.toDataURL(qr, (err, url) => {
+      if (err) {
+        if (!responseSent) {
+          res.status(500).json({ error: "Failed to generate QR code" });
+          responseSent = true;
+        }
+      } else {
+        if (!responseSent) {
+          res.json({ qrCodeUrl: url });
+          responseSent = true;
+        }
+      }
+    });
+  });
+});
+
+// When the client is ready
+let isClientReady = false;
+
+// Update the 'ready' event for WhatsApp client
 client.on("ready", () => {
   console.log("WhatsApp client is ready!");
-
-  // Start the process
   initiateMessageSending();
+
+  // Set the client ready flag
+  isClientReady = true;
 });
+
+// Endpoint to check client status
+app.get("/client-ready", (req, res) => {
+  if (isClientReady) {
+    res.json({ clientStatus: "Client is ready" });
+  } else {
+    res.status(404).json({ clientStatus: "Client not ready" });
+  }
+});
+
+
 
 client.initialize();
 
@@ -92,10 +149,10 @@ async function sendMessageToGroup(groupId, message) {
 
 // Format the message
 function formatMessage(course) {
- const link =
-   course.id_name && course.coupon_code
-     ? `[Click here](https://www.udemy.com/course/${course.id_name}/?couponCode=${course.coupon_code})`
-     : "N/A";
+  const link =
+    course.id_name && course.coupon_code
+      ? `[Click here](https://www.udemy.com/course/${course.id_name}/?couponCode=${course.coupon_code})`
+      : "N/A";
 
   return `📚 *Course Title*: ${course.title}\n📝 *Headline*: ${course.headline}\n🎯 *Level*: ${course.instructional_level_simple}\n🕒 *Duration*: ${course.content_info_short}\n🆓 *Enrolls Left*: ${course.coupon_uses_remaining}\n🌐 *Language*: ${course.language}\n⭐ *Rating*: ${course.rating}\n📂 *Category*: ${course.primary_category}\n🏷️ *Sub Category*: ${course.primary_subcategory}\n🔗 *Link*: ${link}`;
 }
