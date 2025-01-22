@@ -152,10 +152,19 @@ async function sendMessageToGroup(groupId, message) {
 function formatMessage(course) {
   const link =
     course.id_name && course.coupon_code
-      ? `[Click here](https://www.udemy.com/course/${course.id_name}/?couponCode=${course.coupon_code})`
+      ? `https://course-orbit.vercel.app/course/${course.id}`
       : "N/A";
 
-  return `📚 *Course Title*: ${course.title}\n📝 *Headline*: ${course.headline}\n🎯 *Level*: ${course.instructional_level_simple}\n🕒 *Duration*: ${course.content_info_short}\n🆓 *Enrolls Left*: ${course.coupon_uses_remaining}\n🌐 *Language*: ${course.language}\n⭐ *Rating*: ${course.rating}\n📂 *Category*: ${course.primary_category}\n🏷️ *Sub Category*: ${course.primary_subcategory}\n🔗 *Link*: ${link}`;
+  return `📚 *Course Title*: ${course.title}\n
+          📝 *Headline*: ${course.headline}\n
+          🎯 *Level*: ${course.instructional_level_simple}\n
+          🕒 *Duration*: ${course.content_info_short}\n
+          🆓 *Enrolls Left*: ${course.coupon_uses_remaining}\n
+          🌐 *Language*: ${course.language}\n
+          ⭐ *Rating*: ${course.rating}\n
+          📂 *Category*: ${course.primary_category}\n
+          🏷️ *Sub Category*: ${course.primary_subcategory}\n
+          🔗 *Link*: ${link}`;
 }
 
 // Main function to fetch and send messages at intervals
