@@ -4,7 +4,7 @@ import qrcode from "qrcode";
 import axios from "axios";
 import dotenv from "dotenv";
 import path from "path";
-import { fileURLToPath } from "url";  
+import { fileURLToPath } from "url";
 // To resolve __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,8 +94,6 @@ app.get("/client-ready", (req, res) => {
   }
 });
 
-
-
 client.initialize();
 
 // Middleware to parse JSON
@@ -110,6 +108,9 @@ app.post("/send-group-message", async (req, res) => {
   }
 
   try {
+    // Introduce a small delay before sending the message
+    await new Promise((resolve) => setTimeout(resolve, 5000)); // 5 seconds delay for preview
+
     const chat = await client.getChatById(groupId);
     await chat.sendMessage(message);
     return res.status(200).json({ success: "Message sent successfully!" });
@@ -166,7 +167,7 @@ async function startSendingMessages() {
     const message = formatMessage(course);
     await sendMessageToGroup(GROUP_ID, message);
     // Wait for 90 seconds before sending the next message
-    await new Promise((resolve) => setTimeout(resolve, 90000));
+    await new Promise((resolve) => setTimeout(resolve, 90 * 1000));
   });
 
   console.log("Finished sending messages.");
@@ -176,7 +177,7 @@ async function startSendingMessages() {
 async function initiateMessageSending() {
   console.log("Starting message sending process...");
   await startSendingMessages();
-  setTimeout(initiateMessageSending, 60 * 1000);
+  setTimeout(initiateMessageSending, 90 * 1000);
 }
 
 app.listen(PORT, () => {
