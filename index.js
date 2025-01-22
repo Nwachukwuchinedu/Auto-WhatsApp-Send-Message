@@ -92,13 +92,22 @@ async function sendMessageToGroup(groupId, message) {
 
 // Format the message
 function formatMessage(course) {
- const link =
-   course.id_name && course.coupon_code
-     ? `[Click here](https://www.udemy.com/course/${course.id_name}/?couponCode=${course.coupon_code})`
-     : "N/A";
-
-  return `📚 *Course Title*: ${course.title}\n📝 *Headline*: ${course.headline}\n🎯 *Level*: ${course.instructional_level_simple}\n🕒 *Duration*: ${course.content_info_short}\n🆓 *Enrolls Left*: ${course.coupon_uses_remaining}\n🌐 *Language*: ${course.language}\n⭐ *Rating*: ${course.rating}\n📂 *Category*: ${course.primary_category}\n🏷️ *Sub Category*: ${course.primary_subcategory}\n🔗 *Link*: ${link}`;
+  const link = `[Click here to enroll!](https://www.udemy.com/course/${course.id_name}/?couponCode=${course.coupon_code})`;
+  
+  return `
+📚 *Course Title*: *${course.title}*
+📝 *Headline*: _${course.headline}_
+🎯 *Level*: *${course.instructional_level_simple}*
+🕒 *Duration*: *${course.content_info_short}*
+🆓 *Enrolls Left*: *${course.coupon_uses_remaining}*
+🌐 *Language*: *${course.language}*
+⭐ *Rating*: *${course.rating}*
+📂 *Category*: *${course.primary_category}*
+🏷️ *Sub Category*: *${course.primary_subcategory}*
+🔗 ${link}
+  `;
 }
+
 
 // Main function to fetch and send messages at intervals
 async function startSendingMessages() {
