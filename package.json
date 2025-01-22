@@ -17,6 +17,7 @@
     "express": "^4.21.2",
     "fs": "^0.0.1-security",
     "punycode": "^2.3.1",
+    "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.26.0"
   },
