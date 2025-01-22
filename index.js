@@ -105,14 +105,6 @@ async function startSendingMessages() {
   const courses = await fetchCourses();
   console.log(`length of courses: ${courses.length}`);
 
-  // for (const course of courses) {
-  //   const message = formatMessage(course);
-  //   await sendMessageToGroup(GROUP_ID, message);
-
-  //   // Wait for 90 seconds before sending the next message
-  //   await new Promise((resolve) => setTimeout(resolve, 90000));
-  // }
-
   courses.forEach(async (course) => {
     const message = formatMessage(course);
     await sendMessageToGroup(GROUP_ID, message);
