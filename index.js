@@ -133,7 +133,7 @@ async function startSendingMessages() {
 async function initiateMessageSending() {
   console.log("Starting message sending process...");
   await startSendingMessages();
-  setTimeout(initiateMessageSending, 90000);
+  setTimeout(initiateMessageSending, 60 * 1000);
 }
 
 app.listen(PORT, () => {
