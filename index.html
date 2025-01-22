@@ -1,108 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Scan QR Code</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f4f4f4;
-        }
-        .container {
-            text-align: center;
-        }
-        .qr-code {
-            margin: 20px 0;
-        }
-        .info-text {
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
-        .status {
-            font-size: 20px;
-            margin-top: 20px;
-            color: green;
-        }
-        .hidden {
-            display: none;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f4f4f4;
+      }
+      .container {
+        text-align: center;
+      }
+      .qr-code {
+        margin: 20px 0;
+      }
+      .info-text {
+        font-size: 18px;
+        margin-bottom: 20px;
+      }
+      .status {
+        font-size: 20px;
+        margin-top: 20px;
+        color: green;
+      }
+      .hidden {
+        display: none;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1 class="title">Scan the QR Code to Authenticate</h1>
-        <p class="info-text">Please scan the QR code below using WhatsApp on your mobile device to connect to the WhatsApp Web client.</p>
-        
-        <!-- Placeholder for QR code -->
-        <div class="qr-code" id="qr-code-container">
-            <img src="" alt="QR Code" id="qr-code" />
-        </div>
+      <h1 class="title">Scan the QR Code to Authenticate</h1>
+      <p class="info-text">
+        Please scan the QR code below using WhatsApp on your mobile device to
+        connect to the WhatsApp Web client.
+      </p>
 
-        <p class="reload">If the QR code does not load, please <a href="javascript:void(0);" onclick="reloadQRCode()">reload</a> the page.</p>
+      <!-- Placeholder for QR code -->
+      <div class="qr-code" id="qr-code-container">
+        <img src="" alt="QR Code" id="qr-code" />
+      </div>
 
-        <!-- Status message for client readiness -->
-        <p class="status" id="client-status"></p>
+      <p class="reload">
+        If the QR code does not load, please
+        <a href="javascript:void(0);" onclick="reloadQRCode()">reload</a> the
+        page.
+      </p>
+
+      <!-- Status message for client readiness -->
+      <p class="status" id="client-status"></p>
     </div>
 
     <script>
-        let isClientReady = false;
+      let isClientReady = false;
+      let checkInterval;
 
-        // Function to fetch and display QR code
-        async function fetchQRCode() {
-            try {
-                const response = await fetch('/qr-code');
-                const data = await response.json();
-                if (data.qrCodeUrl) {
-                    document.getElementById('qr-code').src = data.qrCodeUrl;
-                } else {
-                    console.error('QR code not available');
-                }
-            } catch (error) {
-                console.error('Error fetching QR code:', error);
-            }
+      // Function to fetch and display QR code
+      async function fetchQRCode() {
+        try {
+          const response = await fetch("/qr-code");
+          const data = await response.json();
+          if (data.qrCodeUrl) {
+            document.getElementById("qr-code").src = data.qrCodeUrl;
+            document
+              .getElementById("qr-code-container")
+              .classList.remove("hidden"); // Show QR code if it's not already visible
+            document.querySelector(".info-text").classList.add("hidden"); // Show status message after client is ready
+            document.querySelector(".title").classList.remove("hidden"); // Show status message after client is ready
+            document.querySelector(".reload").classList.remove("hidden"); // Show status message after client is ready
+          } else {
+            console.error("QR code not available");
+          }
+        } catch (error) {
+          console.error("Error fetching QR code:", error);
         }
+      }
 
-        // Reload the QR code if needed
-        function reloadQRCode() {
-            fetchQRCode();
+      // Reload the QR code if needed
+      function reloadQRCode() {
+        fetchQRCode();
+      }
+
+      // Check if the client is ready
+      async function checkClientStatus() {
+        if (isClientReady) return; // Skip if already marked as ready
+
+        try {
+          const response = await fetch("/client-ready");
+          const data = await response.json();
+
+          if (data.clientStatus) {
+            document.getElementById("client-status").textContent =
+              data.clientStatus;
+            document
+              .getElementById("qr-code-container")
+              .classList.add("hidden"); // Hide QR code after client is ready
+            document.querySelector(".info-text").classList.add("hidden"); // Show status message after client is ready
+            document.querySelector(".title").classList.add("hidden"); // Show status message after client is ready
+            document.querySelector(".reload").classList.add("hidden"); // Show status message after client is ready
+            isClientReady = true;
+            clearInterval(checkInterval); // Stop further checks once client is ready
+          } else {
+            console.log("Client not ready yet");
+            // Make sure QR code is visible if client is not ready
+            document
+              .getElementById("qr-code-container")
+              .classList.remove("hidden");
+          }
+        } catch (error) {
+          console.error("Error checking client status:", error);
         }
+      }
 
-        // Check if the client is ready
-        async function checkClientStatus() {
-            if (isClientReady) return; // Skip if already marked as ready
-
-            try {
-                const response = await fetch('/client-ready');
-                const data = await response.json();
-
-                if (data.clientStatus) {
-                    document.getElementById('client-status').textContent = data.clientStatus;
-                    document.getElementById('qr-code-container').classList.add('hidden'); // Hide QR code after client is ready
-                    document.querySelector('.reload').classList.add('hidden'); // Hide reload button after client is ready
-                    document.querySelector('.info-text').classList.add('hidden'); // Show status message after client is ready
-                    document.querySelector('.title').classList.add('hidden'); // Show status message after client is ready
-
-                    isClientReady = true;
-                } else {
-                    console.log('Client not ready yet');
-                }
-            } catch (error) {
-                console.error('Error checking client status:', error);
-            }
-        }
-
-        // Initial fetch for QR code when page loads
-        window.onload = function() {
-            fetchQRCode();
-            // Check the client status once, then stop
-            setInterval(checkClientStatus, 3000);
-        };
+      // Initial fetch for QR code when page loads
+      window.onload = function () {
+        fetchQRCode();
+        // Check the client status every 3 seconds until the client is ready
+        checkInterval = setInterval(checkClientStatus, 3000);
+      };
     </script>
-</body>
+  </body>
 </html>
