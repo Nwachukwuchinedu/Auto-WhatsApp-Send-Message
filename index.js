@@ -5,13 +5,15 @@ import axios from "axios";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs"; // Import to handle file operations
+
 // To resolve __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
-const { Client, LocalAuth } = pkg;
+const { Client, LocalAuth, MessageMedia } = pkg;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,31 +51,51 @@ app.get("/", (req, res) => {
   });
 });
 
-// Endpoint to get QR code
-app.get("/qr-code", (req, res) => {
-  // Create a flag to ensure the response is sent only once
-  let responseSent = false;
+// Variable to cache the latest QR code
+let cachedQRCode = null;
+let qrCodeGenerationInProgress = false;
 
-  client.on("qr", (qr) => {
-    if (responseSent) return; // Prevent sending multiple responses
-
-    qrcode.toDataURL(qr, (err, url) => {
-      if (err) {
-        if (!responseSent) {
-          res.status(500).json({ error: "Failed to generate QR code" });
-          responseSent = true;
-        }
-      } else {
-        if (!responseSent) {
-          res.json({ qrCodeUrl: url });
-          responseSent = true;
-        }
-      }
-    });
+// QR Code generation logic
+client.on("qr", (qr) => {
+  qrcode.toDataURL(qr, (err, url) => {
+    if (err) {
+      console.error("Error generating QR code:", err);
+      cachedQRCode = null;
+    } else {
+      cachedQRCode = url; // Cache the generated QR code
+    }
   });
 });
 
+// Endpoint to get QR code
+app.get("/qr-code", (req, res) => {
+  if (cachedQRCode) {
+    // Serve the cached QR code
+    return res.json({ qrCodeUrl: cachedQRCode });
+  }
+
+  if (!qrCodeGenerationInProgress) {
+    // Notify the client is initializing and QR code will be ready soon
+    qrCodeGenerationInProgress = true;
+    res.status(202).json({
+      message: "QR code generation in progress. Please try again shortly.",
+    });
+  } else {
+    // If still in progress, notify the user
+    res.status(202).json({
+      message: "QR code generation still in progress. Please wait.",
+    });
+  }
+});
+
 // When the client is ready
+client.on("ready", () => {
+  console.log("WhatsApp client is ready!");
+  cachedQRCode = null; // Clear cached QR code once the client is ready
+  isClientReady = true;
+});
+
+// Client ready status
 let isClientReady = false;
 
 // Update the 'ready' event for WhatsApp client
@@ -155,27 +177,118 @@ function formatMessage(course) {
       ? `https://course-orbit.vercel.app/course/${course.id}`
       : "N/A";
 
-  return `📚 *Course Title*: ${course.title}\n
-          📝 *Headline*: ${course.headline}\n
-          🎯 *Level*: ${course.instructional_level_simple}\n
-          🕒 *Duration*: ${course.content_info_short}\n
-          🆓 *Enrolls Left*: ${course.coupon_uses_remaining}\n
-          🌐 *Language*: ${course.language}\n
-          ⭐ *Rating*: ${course.rating}\n
-          📂 *Category*: ${course.primary_category}\n
-          🏷️ *Sub Category*: ${course.primary_subcategory}\n
-          🔗 *Link*: ${link}`;
+  return `📚 *Course Title*: ${course.title}\n\n📝 *Headline*: _${course.headline}_\n\n🎯 *Level*: ${course.instructional_level_simple}\n\n🕒 *Duration*: ${course.content_info_short}\n\n🆓 *Enrolls Left*: ${course.coupon_uses_remaining}\n\n🌐 *Language*: ${course.language}\n\n⭐ *Rating*: ${course.rating}\n\n📂 *Category*: ${course.primary_category}\n\n🏷️ *Sub Category*: ${course.primary_subcategory}\n\n🔗 *Link*: ${link}`;
+}
+
+// // Main function to fetch and send messages at intervals
+// async function startSendingMessages() {
+//   const courses = await fetchCourses();
+//   console.log(`length of courses: ${courses.length}`);
+
+//   courses.forEach(async (course) => {
+//     const message = formatMessage(course);
+//     await sendMessageToGroup(GROUP_ID, message);
+//     // Wait for 90 seconds before sending the next message
+//     await new Promise((resolve) => setTimeout(resolve, 90 * 1000));
+//   });
+
+//   console.log("Finished sending messages.");
+// }
+
+// Function to download an image
+
+// Function to download an image
+async function downloadImage(imageUrl) {
+  try {
+    const timestamp = Date.now(); // Unique identifier
+    const filePath = path.resolve(__dirname, `temp_image_${timestamp}.jpg`);
+
+    const response = await axios({
+      url: imageUrl,
+      method: "GET",
+      responseType: "stream",
+    });
+
+    // Write the image file
+    const writer = fs.createWriteStream(filePath);
+    response.data.pipe(writer);
+
+    // Return a promise that resolves when the file is finished writing
+    return new Promise((resolve, reject) => {
+      writer.on("finish", () => resolve(filePath));
+      writer.on("error", reject);
+    });
+  } catch (error) {
+    console.error("Error downloading image:", error.message);
+    return null;
+  }
+}
+
+function cleanupFile(filePath) {
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`Deleted file: ${filePath}`);
+    } else {
+      console.warn(`File does not exist, skipping delete: ${filePath}`);
+    }
+  } catch (error) {
+    console.error("Error deleting file:", error.message);
+  }
+}
+
+// Function to send an image
+async function sendImageToGroup(groupId, imagePath, caption) {
+  try {
+    const media = MessageMedia.fromFilePath(imagePath);
+    const chat = await client.getChatById(groupId);
+    await chat.sendMessage(media, { caption });
+    //console.log(`Image sent successfully with caption: ${caption}`);
+  } catch (error) {
+    console.error("Error sending image:", error.message);
+  }
 }
 
 // Main function to fetch and send messages at intervals
 async function startSendingMessages() {
   const courses = await fetchCourses();
-  console.log(`length of courses: ${courses.length}`);
+  console.log(`Number of courses to send: ${courses.length}`);
 
   courses.forEach(async (course) => {
-    const message = formatMessage(course);
-    await sendMessageToGroup(GROUP_ID, message);
-    // Wait for 90 seconds before sending the next message
+    const caption = formatMessage(course); // Use the formatted message as the caption
+
+    if (course.image) {
+      try {
+        console.log(`Downloading image for course: ${course.title}`);
+        const imagePath = await downloadImage(course.image);
+
+        if (imagePath) {
+          console.log(`Sending image for course: ${course.title}`);
+          await sendImageToGroup(GROUP_ID, imagePath, caption);
+          cleanupFile(imagePath); // Clean up the downloaded file
+        } else {
+          console.error(`Failed to download image for course: ${course.title}`);
+        }
+      } catch (error) {
+        console.error(
+          `Error processing image for course: ${course.title}`,
+          error.message
+        );
+      }
+    } else {
+      console.warn(`No image URL provided for course: ${course.title}`);
+      try {
+        console.log(`Sending text message for course: ${course.title}`);
+        await sendMessageToGroup(GROUP_ID, caption);
+      } catch (error) {
+        console.error(
+          `Error sending text message for course: ${course.title}`,
+          error.message
+        );
+      }
+    }
+
+    // Wait for 90 seconds before processing the next course
     await new Promise((resolve) => setTimeout(resolve, 90 * 1000));
   });
 
