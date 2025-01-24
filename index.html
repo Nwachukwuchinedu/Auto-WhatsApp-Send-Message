@@ -72,8 +72,6 @@
               .getElementById("qr-code-container")
               .classList.remove("hidden"); // Show QR code if it's not already visible
             document.querySelector(".info-text").classList.add("hidden"); // Show status message after client is ready
-            document.querySelector(".title").classList.remove("hidden"); // Show status message after client is ready
-            document.querySelector(".reload").classList.remove("hidden"); // Show status message after client is ready
           } else {
             console.error("QR code not available");
           }
@@ -102,8 +100,6 @@
               .getElementById("qr-code-container")
               .classList.add("hidden"); // Hide QR code after client is ready
             document.querySelector(".info-text").classList.add("hidden"); // Show status message after client is ready
-            document.querySelector(".title").classList.add("hidden"); // Show status message after client is ready
-            document.querySelector(".reload").classList.add("hidden"); // Show status message after client is ready
             isClientReady = true;
             clearInterval(checkInterval); // Stop further checks once client is ready
           } else {
