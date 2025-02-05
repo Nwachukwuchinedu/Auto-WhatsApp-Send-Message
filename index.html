@@ -56,7 +56,7 @@
       <!-- Status message for client readiness -->
       <p class="status" id="client-status"></p>
     </div>
-
+    
     <script>
       let isClientReady = false;
       let checkInterval;
@@ -68,10 +68,10 @@
           const data = await response.json();
           if (data.qrCodeUrl) {
             document.getElementById("qr-code").src = data.qrCodeUrl;
-            document
-              .getElementById("qr-code-container")
-              .classList.remove("hidden"); // Show QR code if it's not already visible
-            document.querySelector(".info-text").classList.add("hidden"); // Show status message after client is ready
+            // document
+            //   .getElementById("qr-code-container")
+            //   .classList.remove("hidden"); // Show QR code if it's not already visible
+            // document.querySelector(".info-text").classList.add("hidden"); // Show status message after client is ready
           } else {
             console.error("QR code not available");
           }
@@ -96,10 +96,10 @@
           if (data.clientStatus) {
             document.getElementById("client-status").textContent =
               data.clientStatus;
-            document
-              .getElementById("qr-code-container")
-              .classList.add("hidden"); // Hide QR code after client is ready
-            document.querySelector(".info-text").classList.add("hidden"); // Show status message after client is ready
+            // document
+            //   .getElementById("qr-code-container")
+            //   .classList.add("hidden"); // Hide QR code after client is ready
+            // document.querySelector(".info-text").classList.add("hidden"); // Show status message after client is ready
             isClientReady = true;
             clearInterval(checkInterval); // Stop further checks once client is ready
           } else {
