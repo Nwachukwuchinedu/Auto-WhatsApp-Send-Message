@@ -60,8 +60,8 @@ async function connectDB() {
     authStrategy: new RemoteAuth({
       clientId: "whatsapp-bot",
       store: store,
-      dataPath: "./session", // This is needed for wwebjs-mongo, but the actual session is in MongoDB
-      backupSyncIntervalMs: 60000,
+      dataPath: "/opt/render/persistent/session", // This is needed for wwebjs-mongo, but the actual session is in MongoDB
+      backupSyncIntervalMs: null,
     }), // ✅ Use MongoStore for session storage
     // puppeteer: {
 
