@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs"; // Import to handle file operations
-import {MongoStore} from "wwebjs-mongo";
+import { MongoStore } from "wwebjs-mongo";
 import mongoose from "mongoose";
 // To resolve __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -32,33 +32,32 @@ if (!FETCH_API_URL || !SEND_MESSAGE_ENDPOINT || !GROUP_ID) {
 }
 
 // 🔗 Replace with your actual MongoDB Atlas URI
-const MONGO_URI =
-  "mongodb+srv://chinedusimeon2020:EGENKiWMfj9IJaoi@courseorbit.sa2ky.mongodb.net/?retryWrites=true&w=majority&appName=courseorbiti"; 
+const MONGO_URI= process.env.MONGO_URI;
 
 async function connectDB() {
-    try {
-        await mongoose.connect(MONGO_URI);
-        console.log("✅ Connected to MongoDB Atlas");
-    } catch (err) {
-        console.error("❌ MongoDB connection error:", err);
-    }
+  try {
+    await mongoose.connect(MONGO_URI);
+    console.log("✅ Connected to MongoDB Atlas");
+  } catch (err) {
+    console.error("❌ MongoDB connection error:", err);
+  }
 }
 
 (async () => {
   await connectDB(); // Connect to MongoDB
 
   // ✅ Initialize MongoStore
- const store = new MongoStore({ mongoose:mongoose });
+  const store = new MongoStore({ mongoose: mongoose });
 
-   const client = new Client({
-     authStrategy: new RemoteAuth({
-       clientId: "whatsapp-bot",
-       store: store,
-       dataPath: "./session", // This is needed for wwebjs-mongo, but the actual session is in MongoDB
-       backupSyncIntervalMs: 60000,
-     }), // ✅ Use MongoStore for session storage
-     puppeteer: { args: ["--no-sandbox", "--disable-setuid-sandbox"] },
-   });
+  const client = new Client({
+    authStrategy: new RemoteAuth({
+      clientId: "whatsapp-bot",
+      store: store,
+      dataPath: "./session", // This is needed for wwebjs-mongo, but the actual session is in MongoDB
+      backupSyncIntervalMs: 60000,
+    }), // ✅ Use MongoStore for session storage
+    puppeteer: { args: ["--no-sandbox", "--disable-setuid-sandbox"] },
+  });
 
   client.on("authenticated", (session) => {
     console.log("Authenticated!");
