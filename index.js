@@ -16,7 +16,7 @@ dotenv.config();
 const { Client, LocalAuth, MessageMedia } = pkg;
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // Environment variables
 const FETCH_API_URL = process.env.FETCH_API_URL;
