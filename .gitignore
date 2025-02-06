@@ -11,6 +11,7 @@ lerna-debug.log*
 node_modules
 .wwebjs_auth
 .wwebjs_cache
+session
 dist
 dist-ssr
 *.local
