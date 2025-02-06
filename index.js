@@ -57,12 +57,6 @@ async function connectDB() {
       dataPath: "./session", // This is needed for wwebjs-mongo, but the actual session is in MongoDB
       backupSyncIntervalMs: 60000,
     }), // ✅ Use MongoStore for session storage
-    puppeteer: {
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      timeout: 60000,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
-    },
   });
 
   client.on("authenticated", (session) => {
