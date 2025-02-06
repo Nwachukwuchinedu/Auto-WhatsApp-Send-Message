@@ -9,6 +9,12 @@ import fs from "fs"; // Import to handle file operations
 import { MongoStore } from "wwebjs-mongo";
 import mongoose from "mongoose";
 import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+
+// Use the StealthPlugin to enhance Puppeteer's stealth capabilities
+puppeteer.use(StealthPlugin());
+
 // To resolve __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,6 +63,19 @@ async function connectDB() {
       dataPath: "./session", // This is needed for wwebjs-mongo, but the actual session is in MongoDB
       backupSyncIntervalMs: 60000,
     }), // ✅ Use MongoStore for session storage
+    puppeteer: {
+      executablePath: await chromium.executablePath(), // ✅ Use lightweight Chromium
+      headless: chromium.headless,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--no-zygote",
+        "--single-process",
+      ],
+    },
   });
 
   client.on("authenticated", (session) => {
