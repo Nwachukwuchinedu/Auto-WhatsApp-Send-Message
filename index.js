@@ -8,8 +8,6 @@ import { fileURLToPath } from "url";
 import fs from "fs"; // Import to handle file operations
 import { MongoStore } from "wwebjs-mongo";
 import mongoose from "mongoose";
-import chromium from "@sparticuz/chromium";
-//import chromium from "chrome-aws-lambda";
 // To resolve __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,7 +32,7 @@ if (!FETCH_API_URL || !SEND_MESSAGE_ENDPOINT || !GROUP_ID) {
 }
 
 // 🔗 Replace with your actual MongoDB Atlas URI
-const MONGO_URI = process.env.MONGO_URI;
+const MONGO_URI= process.env.MONGO_URI;
 
 async function connectDB() {
   try {
@@ -59,15 +57,8 @@ async function connectDB() {
       backupSyncIntervalMs: 60000,
     }), // ✅ Use MongoStore for session storage
     puppeteer: {
-      executablePath: await chromium.executablePath(), // ✅ Use optimized Chromium
-      headless: chromium.headless, // ✅ Ensures headless mode for AWS/Render
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--single-process",
-      ],
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      timeout: 60000,
     },
   });
 
