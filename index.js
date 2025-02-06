@@ -61,7 +61,7 @@ async function connectDB() {
       clientId: "whatsapp-bot",
       store: store,
       dataPath: "/opt/render/persistent/session", // This is needed for wwebjs-mongo, but the actual session is in MongoDB
-      backupSyncIntervalMs: null,
+      backupSyncIntervalMs: 60000,
     }), // ✅ Use MongoStore for session storage
     // puppeteer: {
 
