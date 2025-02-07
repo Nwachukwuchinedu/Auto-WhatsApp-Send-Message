@@ -56,6 +56,18 @@ async function connectDB() {
   // ✅ Initialize MongoStore
   const store = new MongoStore({ mongoose: mongoose });
 
+  store.on("error", (err) => {
+    console.error("MongoStore Error:", err);
+  });
+
+  store.on("update", () => {
+    console.log("Session updated in MongoDB.");
+  });
+
+  store.on("ready", () => {
+    console.log("Session is ready and loaded from MongoDB.");
+  });
+
   const client = new Client({
     authStrategy: new RemoteAuth({
       clientId: "whatsapp-bot",
@@ -166,8 +178,14 @@ async function connectDB() {
     }
   });
 
-  client.on("disconnected", async () => {
-    console.log("⚠ Client disconnected! Saving session...");
+  client.on("disconnected", async (reason) => {
+    console.log(`⚠ Client disconnected! Reason: ${reason}`);
+
+    // Delay before reinitializing to prevent crash loops
+    setTimeout(async () => {
+      console.log("🔄 Restarting client...");
+      await client.initialize();
+    }, 5000); // Wait 5 seconds before reconnecting
   });
 
   client.initialize();
@@ -175,13 +193,19 @@ async function connectDB() {
   app.use(express.json());
 
   const filePath = "RemoteAuth-whatsapp-bot.zip";
-  setTimeout(() => {
+
+  setInterval(() => {
     if (fs.existsSync(filePath)) {
-      console.log("Processing file...");
-    } else {
-      console.log("File not found, likely auto-deleted.");
+      console.log("File exists, waiting before processing...");
+      setTimeout(() => {
+        if (fs.existsSync(filePath)) {
+          console.log("Processing file...");
+        } else {
+          console.log("File was deleted before processing.");
+        }
+      }, 3000); // Wait 3 seconds before checking again
     }
-  }, 5000); // Wait 5 seconds
+  }, 10000); // Check every 10 seconds
 
   // API Endpoint to send a message to a group
   app.post("/send-group-message", async (req, res) => {
