@@ -174,6 +174,15 @@ async function connectDB() {
   // Middleware to parse JSON
   app.use(express.json());
 
+  const filePath = "RemoteAuth-whatsapp-bot.zip";
+  setTimeout(() => {
+    if (fs.existsSync(filePath)) {
+      console.log("Processing file...");
+    } else {
+      console.log("File not found, likely auto-deleted.");
+    }
+  }, 5000); // Wait 5 seconds
+
   // API Endpoint to send a message to a group
   app.post("/send-group-message", async (req, res) => {
     const { groupId, message } = req.body;
