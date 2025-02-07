@@ -221,7 +221,10 @@ async function connectDB() {
       });
       console.log("Message sent:", response.data);
     } catch (error) {
-      console.error("Error sending message:", error.message);
+      console.error(
+        "Error sending message:",
+        error.response ? error.response.data : error.message
+      );
     }
   }
 
@@ -318,7 +321,9 @@ async function connectDB() {
           const imagePath = await downloadImage(course.image);
 
           if (imagePath) {
-            console.log(`Sending image for course: ${course.title}`);
+            console.log(
+              `Sending image for course: ${course.title}, File: ${imagePath}`
+            );
             await sendImageToGroup(GROUP_ID, imagePath, caption);
             cleanupFile(imagePath); // Clean up the downloaded file
           } else {
