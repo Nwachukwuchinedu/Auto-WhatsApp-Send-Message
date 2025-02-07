@@ -56,23 +56,10 @@ async function connectDB() {
   // ✅ Initialize MongoStore
   const store = new MongoStore({ mongoose: mongoose });
 
-  store.on("error", (err) => {
-    console.error("MongoStore Error:", err);
-  });
-
-  store.on("update", () => {
-    console.log("Session updated in MongoDB.");
-  });
-
-  store.on("ready", () => {
-    console.log("Session is ready and loaded from MongoDB.");
-  });
-
   const client = new Client({
     authStrategy: new RemoteAuth({
       clientId: "whatsapp-bot",
       store: store,
-      dataPath: "/opt/render/persistent/session", // This is needed for wwebjs-mongo, but the actual session is in MongoDB
       backupSyncIntervalMs: 60000,
     }), // ✅ Use MongoStore for session storage
     // puppeteer: {
