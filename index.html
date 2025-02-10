@@ -44,13 +44,13 @@
 
       <!-- Placeholder for QR code -->
       <div class="qr-code" id="qr-code-container">
-        <img src="" alt="QR Code" id="qr-code" />
+        <!-- If no valid src is provided, the alt text will display the status message -->
+        <img src="" alt="QR code not available yet" id="qr-code" />
       </div>
 
       <p class="reload">
         If the QR code does not load, please
-        <a href="javascript:void(0);" onclick="reloadQRCode()">reload</a> the
-        page.
+        <a href="javascript:void(0);" onclick="reloadQRCode()">reload</a> the page.
       </p>
 
       <!-- Status message for client readiness -->
@@ -61,65 +61,64 @@
       let isClientReady = false;
       let checkInterval;
 
-      // Function to fetch and display QR code
+      // Function to fetch and display the QR code
       async function fetchQRCode() {
         try {
           const response = await fetch("/qr-code");
           const data = await response.json();
+          console.log("QR Code response:", data);
+
+          // Check if the QR code URL is provided
           if (data.qrCodeUrl) {
             document.getElementById("qr-code").src = data.qrCodeUrl;
-            // document
-            //   .getElementById("qr-code-container")
-            //   .classList.remove("hidden"); // Show QR code if it's not already visible
-            // document.querySelector(".info-text").classList.add("hidden"); // Show status message after client is ready
-          } else {
-            console.error("QR code not available");
+            // Optionally, clear the alt text when a valid image is available
+            document.getElementById("qr-code").alt = "Scan the QR Code";
+          } else if (data.message) {
+            // If not ready, clear the src and update the alt text to show the message
+            document.getElementById("qr-code").src = "";
+            document.getElementById("qr-code").alt = data.message;
+            console.warn("QR code not available yet:", data.message);
           }
         } catch (error) {
           console.error("Error fetching QR code:", error);
         }
       }
 
-      // Reload the QR code if needed
+      // Reload the QR code when user clicks the reload link
       function reloadQRCode() {
         fetchQRCode();
       }
 
       // Check if the client is ready
       async function checkClientStatus() {
-        if (isClientReady) return; // Skip if already marked as ready
+        if (isClientReady) return;
 
         try {
           const response = await fetch("/client-ready");
           const data = await response.json();
-
+          console.log("Client status response:", data);
+          
           if (data.clientStatus) {
-            document.getElementById("client-status").textContent =
-              data.clientStatus;
-            // document
-            //   .getElementById("qr-code-container")
-            //   .classList.add("hidden"); // Hide QR code after client is ready
-            // document.querySelector(".info-text").classList.add("hidden"); // Show status message after client is ready
+            document.getElementById("client-status").textContent = data.clientStatus;
             isClientReady = true;
-            clearInterval(checkInterval); // Stop further checks once client is ready
+            clearInterval(checkInterval);
+            // Optionally, hide the QR code container once the client is ready:
+            // document.getElementById("qr-code-container").classList.add("hidden");
           } else {
             console.log("Client not ready yet");
-            // Make sure QR code is visible if client is not ready
-            document
-              .getElementById("qr-code-container")
-              .classList.remove("hidden");
+            // Make sure the QR code container remains visible if the client is not ready
+            document.getElementById("qr-code-container").classList.remove("hidden");
           }
         } catch (error) {
           console.error("Error checking client status:", error);
         }
       }
 
-      // Initial fetch for QR code when page loads
-      window.onload = function () {
+      // Initial fetch and client status check when the page loads
+      window.addEventListener("load", () => {
         fetchQRCode();
-        // Check the client status every 3 seconds until the client is ready
         checkInterval = setInterval(checkClientStatus, 3000);
-      };
+      });
     </script>
   </body>
 </html>
