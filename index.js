@@ -5,10 +5,6 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
-import mongoose from "mongoose";
-import AdmZip from "adm-zip";
-import fsExtra from "fs-extra";
-import streamifier from "streamifier"; // For converting Buffer to stream
 
 dotenv.config();
 
